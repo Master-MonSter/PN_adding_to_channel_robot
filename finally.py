@@ -16,12 +16,14 @@ CHANNEL_USERNAME = 'CHANNEL_USERNAME'
 # Creating a telethon connection
 client = TelegramClient('session_name', API_ID, API_HASH)
 
+# Global variables
 report = []
 success_count = 0
 fail_count = 0
 
 # Checking for valid phone number
 def check_phone_number_validation(phone_number: str):
+    global fail_count, report
     pattern = r"^(0|0098|\+98)9(0[1-5]|[13]\d|2[0-2]|9[0-4]|98)\d{7}$"
 
     # Example of usage:
@@ -29,6 +31,8 @@ def check_phone_number_validation(phone_number: str):
     if match:
         return True
     else:
+        fail_count += 1
+        report.append(f'The format of {phone_number} is incorrect')
         return False
       
 
@@ -79,8 +83,12 @@ async def manual_number_entry(update: Update, context: ContextTypes.DEFAULT_TYPE
         for phone_number in phone_numbers:
             if check_phone_number_validation(phone_number):
                 await add_number_to_channel(phone_number)
+                
         text = f"Success count: {success_count}\nError count: {fail_count}\nReports: {report}"    
-        await context
+        await context.bot.send_message(
+            chat_id= update.effective_chat.id,
+            text= text
+        )
                 
 
 # Getting file and processing it
@@ -102,7 +110,12 @@ async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         # Deleting file after use it 
         os.remove(file_path)
-        await update.message.reply_text('شماره‌ها با موفقیت پردازش شدند.')
+        
+        text = f"Success count: {success_count}\nError count: {fail_count}\nReports: {report}"    
+        await context.bot.send_message(
+            chat_id= update.effective_chat.id,
+            text= text
+        )
 
 # Using telethon for adding to channel
 async def add_number_to_channel(phone_number: str) -> None:
